@@ -1,12 +1,26 @@
 (ns goose.console.server
-  (:require [ring.adapter.jetty :as jetty]
-    [ring.util.response :as response]
-    [ring.middleware.content-type :refer [wrap-content-type]]))
+  (:require [goose.console.ui :as ui]
+            [ring.adapter.jetty :as jetty]
+            [ring.middleware.file :refer [wrap-file]]
+            [ring.middleware.resource :refer [wrap-resource]]
+            [ring.util.response :as response]))
 
 (defonce server (atom nil))
 
-(defn handler [_request]
-      (-> (response/file-response "src/goose/console/landing_page.html")))
+(defn landing-page []
+  (let [stats {:enqueued 231 :scheduled 5 :periodic 3 :dead 43}
+        landing-page-html (ui/landing-page stats)]
+    (response/response landing-page-html)))
+
+(defn routes [{:keys [uri] :as req}]
+  (if (= uri "/")
+    (landing-page)
+    (response/response "<h1>Not Found</h1>")))
+
+(def handler
+  (-> routes
+      (wrap-resource "public")
+      (wrap-file "resources/public")))
 
 (defn start-server []
   (reset! server (jetty/run-jetty handler {:port  3001
@@ -20,4 +34,3 @@
 
 (comment (start-server))
 (comment (stop-server))
-
