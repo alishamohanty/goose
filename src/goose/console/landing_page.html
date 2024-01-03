@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goose Dashboard</title>
+    <style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+header nav {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+main {
+    height: 50vh;
+    display: flex;
+    align-items: center;
+}
+
+.nav-start {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#logo {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+#menu a {
+    text-decoration: none;
+    color: #333;
+    margin-left: 2rem;
+}
+
+.statistics {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: white;
+    margin: 2rem;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: -webkit-fill-available;
+}
+
+.stat {
+    text-align: center;
+    display: grid;
+}
+
+.stat .number {
+    color: #C87021; /* or any other color you prefer */
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat .label {
+    color: #333;
+    font-size: 18px;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+  background-color: #2196F3;
+}
+
+input:focus + .switch-slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .switch-slider:before {
+  transform: translateX(26px);
+}
+
+</style>
+</head>
+<body>
+<header>
+    <nav>
+        <div class="nav-start">
+            <div id="logo">AppName</div>
+            <div id="menu">
+                <a href="/enqueued">Enqueued</a>
+                <a href="/scheduled">Scheduled</a>
+                <a href="/periodic">Periodic</a>
+                <a href="/batch">Batch</a>
+                <a href="/dead">Dead</a>
+            </div>
+        </div>
+        <div class="nav-end">
+            <label class="toggle-switch">
+                <input type="checkbox" />
+                <span class="switch-slider"></span>
+            </label>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <section class="statistics">
+        <div class="stat" id="enqueued">
+            <span class="number">234</span>
+            <span class="label">Enqueued</span>
+        </div>
+        <div class="stat" id="scheduled">
+            <span class="number">5</span>
+            <span class="label">Scheduled</span>
+        </div>
+        <div class="stat" id="periodic">
+            <span class="number">3</span>
+            <span class="label">Periodic</span>
+        </div>
+        <div class="stat" id="dead">
+            <span class="number">43</span>
+            <span class="label">Dead</span>
+        </div>
+    </section>
+</main>
+</body>
+</html>
