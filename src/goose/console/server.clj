@@ -1,20 +1,15 @@
 (ns goose.console.server
-  (:require [goose.console.ui :as ui]
-            [ring.adapter.jetty :as jetty]
+  (:require [ring.adapter.jetty :as jetty]
             [ring.middleware.file :refer [wrap-file]]
             [ring.middleware.resource :refer [wrap-resource]]
-            [ring.util.response :as response]))
+            [ring.util.response :refer [resource-response content-type] :as response]))
 
 (defonce server (atom nil))
 
-(defn landing-page []
-  (let [stats {:enqueued 231 :scheduled 5 :periodic 3 :dead 43}
-        landing-page-html (ui/landing-page stats)]
-    (response/response landing-page-html)))
-
-(defn routes [{:keys [uri] :as req}]
+(defn routes [{:keys [uri]}]
   (if (= uri "/")
-    (landing-page)
+    (some-> (resource-response "index.html" {:root "public"})
+            (content-type "text/html; charset=utf-8"))
     (response/response "<h1>Not Found</h1>")))
 
 (def handler
