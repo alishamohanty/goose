@@ -91,14 +91,19 @@
        [:td (:enqueued-at job)]
        [:td [:input {:type "checkbox" :name "" :id ""}]]])]])
 
-(defn enqueued-page-view [data]
+(defn enqueued-page-view [{:keys [prefix-route] :as data}]
   [:div.redis-enqueued-main-content
    [:h1 "Enqueued Jobs"]
    [:div.content
     (sidebar data)
     [:div.right-side
      (sticky-header)
-     [:div.pagination "1 2 .. >"]
+     [:div.pagination
+      [:a {:href (prefix-route "/enqueued/queue/" (:queue data) "?page=1")} "1"]
+      [:a {:href (prefix-route "/enqueued/queue/" (:queue data) "?page=2")} "2"]
+      [:div ".."]
+      [:a {:href (prefix-route "/enqueued/queue/" (:queue data) "?page=" (inc (:page data)))}
+       ">"]]
      (enqueued-jobs-table (:jobs data))
      [:div.bottom
       [:button.btn.btn-danger.btn-md "Purge"]]]]])
@@ -128,6 +133,7 @@
 
         jobs (enqueued-jobs/get-by-range redis-conn queue start end)]
     {:queues queues
+     :page page
      :queue  queue
      :jobs   jobs}))
 
