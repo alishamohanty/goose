@@ -114,11 +114,20 @@
      :periodic  periodic
      :dead      dead}))
 
-(defn enqueued-page-data [redis-conn]
-  (let [queues (enqueued-jobs/list-all-queues redis-conn)
-        first-queue (first queues)
-        jobs (if first-queue (enqueued-jobs/get-by-range redis-conn first-queue 0 10))]
+(def page-size 10)
+
+(defn enqueued-page-data
+  [redis-conn queue page]
+  (let [page (Integer/parseInt (or page "1"))
+        start (* (- page 1) page-size)
+        end (- (* page page-size) 1)
+
+        queues (enqueued-jobs/list-all-queues redis-conn)
+        queue (or queue (first queues))
+
+        jobs (enqueued-jobs/get-by-range redis-conn queue start end)]
     {:queues queues
+     :queue queue
      :jobs   jobs}))
 
 (defn home-page [{{:keys [app-name
@@ -127,10 +136,14 @@
         data (jobs-size (:redis-conn broker))]
     (response/response (view "Home" (assoc data :app-name app-name)))))
 
-(defn enqueued-page [{{:keys [app-name broker]} :client-opts}]
+(defn enqueued-page [{{:keys [app-name broker]} :client-opts
+                      {:keys [page]}            :params
+                      {:keys [queue]}           :route-params}]
   (let [view (layout header enqueued-page-view)
-        data (enqueued-page-data (:redis-conn broker))
-        _ (println "Enqueued: " data)]
+        ;;{:keys [queue page]} (validate-enqueued-page-data queue page)
+        data (enqueued-page-data (:redis-conn broker) queue page)
+        _ (println "Enqueued page: Queue: " queue " page: " page)
+        _ (println "Jobs count:- " (count (:jobs data)))]
     (response/response (view "Enqueued" (assoc data :app-name app-name)))))
 
 (defn- load-css [_]
@@ -157,18 +170,19 @@
    :redirect-to-home-page redirect-to-home-page
    :not-found             not-found})
 
+(defn routes [route-prefix]
+  [route-prefix [["" :redirect-to-home-page]
+                 ["/" :home-page]
+                 ["/enqueued" {""                 :enqueued-page
+                               ["/queue/" :queue] :enqueued-page}]
+                 ["/css/style.css" :load-css]
+                 ["/img/goose-logo.png" :load-img]
+                 [true :not-found]]])
+
 (defn handler [_ {:keys                  [uri]
                   {:keys [route-prefix]} :client-opts
                   :as                    req}]
-  (let [routes [route-prefix [["" :redirect-to-home-page]
-                              ["/" :home-page]
-                              ["/enqueued" {""                 :enqueued-page
-                                            ["/queue/" :queue] :enqueued-page
-                                            ["/" :id]          :enqueued-page}]
-                              ["/css/style.css" :load-css]
-                              ["/img/goose-logo.png" :load-img]
-                              [true :not-found]]]
-        result (bidi/match-route routes uri)]
-    ((-> result
-         (get :handler)
-         route-handlers) req)))
+  (let [{:keys [handler route-params]} (bidi/match-route (routes route-prefix) uri)
+        handler-fn (get route-handlers handler)
+        req (assoc req :route-params route-params)]
+    (handler-fn req)))
