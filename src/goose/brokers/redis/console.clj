@@ -8,50 +8,51 @@
             [ring.util.response :as response]))
 
 (defn- layout [& components]
-  (fn [title data]
+  (fn [title {:keys [prefix-route] :as data}]
     (html5 [:head
             [:meta {:charset "UTF-8"}]
             [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
             [:title title]
-            (include-css "css/style.css")]
+            (include-css (prefix-route "/css/style.css"))]
            [:body
             (map (fn [c] (c data)) components)])))
 
-(defn- header [{:keys [app-name] :or {app-name ""}}]
+(defn- header [{:keys [app-name
+                       prefix-route] :or {app-name ""}}]
   [:header
    [:nav
     [:div.nav-start
      [:div.goose-logo
-      [:a {:href ""}
-       [:img {:src "img/goose-logo.png" :alt "goose-logo"}]]]
-     [:a {:href ""}
+      [:a {:href (prefix-route "")}
+       [:img {:src (prefix-route "/img/goose-logo.png") :alt "goose-logo"}]]]
+     [:a {:href (prefix-route "")}
       [:div#app-name app-name]]
      [:div#menu
-      [:a {:href "enqueued"} "Enqueued"]
-      [:a {:href "scheduled"} "Scheduled"]
-      [:a {:href "periodic"} "Periodic"]
-      [:a {:href "batch"} "Batch"]
-      [:a {:href "dead"} "Dead"]]]]])
+      [:a {:href (prefix-route "/enqueued")} "Enqueued"]
+      [:a {:href (prefix-route "/scheduled")} "Scheduled"]
+      [:a {:href (prefix-route "/periodic")} "Periodic"]
+      [:a {:href (prefix-route "/batch")} "Batch"]
+      [:a {:href (prefix-route "/dead")} "Dead"]]]]])
 
-(defn- stats-bar [page-data]
+(defn- stats-bar [{:keys [prefix-route] :as page-data}]
   [:main
    [:section.statistics
-    (for [stat [{:id :enqueued :label "Enqueued" :route "enqueued"}
-                {:id :scheduled :label "Scheduled" :route "scheduled"}
-                {:id :periodic :label "Periodic" :route "periodic"}
-                {:id :dead :label "Dead" :route "dead"}]]
+    (for [stat [{:id :enqueued :label "Enqueued" :route "/enqueued"}
+                {:id :scheduled :label "Scheduled" :route "/scheduled"}
+                {:id :periodic :label "Periodic" :route "/periodic"}
+                {:id :dead :label "Dead" :route "/dead"}]]
       [:div.stat {:id (:id stat)}
        [:span.number (str (get page-data (:id stat)))]
-       [:a {:href (:route stat)}
+       [:a {:href (prefix-route (:route stat))}
         [:span.label (:label stat)]]])]])
 
-(defn sidebar [queues]
+(defn sidebar [{:keys [prefix-route queues]}]
   [:div#sidebar
    [:h3 "Queues"]
    [:div.queue-list
     [:ul
      (for [queue queues]
-       [:li.queue-list-item queue])]]])
+       [:a {:href (prefix-route "/enqueued/queue/" queue)} [:li.queue-list-item queue]])]]])
 
 (defn sticky-header []
   [:div.header
@@ -94,7 +95,7 @@
   [:div.redis-enqueued-main-content
    [:h1 "Enqueued Jobs"]
    [:div.content
-    (sidebar (:queues data))
+    (sidebar data)
     [:div.right-side
      (sticky-header)
      [:div.pagination "1 2 .. >"]
@@ -127,24 +128,25 @@
 
         jobs (enqueued-jobs/get-by-range redis-conn queue start end)]
     {:queues queues
-     :queue queue
+     :queue  queue
      :jobs   jobs}))
 
-(defn home-page [{{:keys [app-name
+(defn home-page [{:keys            [prefix-route]
+                  {:keys [app-name
                           broker]} :client-opts}]
   (let [view (layout header stats-bar)
         data (jobs-size (:redis-conn broker))]
-    (response/response (view "Home" (assoc data :app-name app-name)))))
+    (response/response (view "Home" (assoc data :app-name app-name
+                                                :prefix-route prefix-route)))))
 
-(defn enqueued-page [{{:keys [app-name broker]} :client-opts
+(defn enqueued-page [{:keys                     [prefix-route]
+                      {:keys [app-name broker]} :client-opts
                       {:keys [page]}            :params
                       {:keys [queue]}           :route-params}]
   (let [view (layout header enqueued-page-view)
-        ;;{:keys [queue page]} (validate-enqueued-page-data queue page)
-        data (enqueued-page-data (:redis-conn broker) queue page)
-        _ (println "Enqueued page: Queue: " queue " page: " page)
-        _ (println "Jobs count:- " (count (:jobs data)))]
-    (response/response (view "Enqueued" (assoc data :app-name app-name)))))
+        data (enqueued-page-data (:redis-conn broker) queue page)]
+    (response/response (view "Enqueued" (assoc data :app-name app-name
+                                                    :prefix-route prefix-route)))))
 
 (defn- load-css [_]
   (-> "css/style.css"
