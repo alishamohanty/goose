@@ -45,6 +45,63 @@
        [:a {:href (:route stat)}
         [:span.label (:label stat)]]])]])
 
+(defn sidebar [queues]
+  [:div#sidebar
+   [:h3 "Queues"]
+   [:div.queue-list
+    [:ul
+     (for [queue queues]
+       [:li.queue-list-item queue])]]])
+
+(defn sticky-header []
+  [:div.header
+   [:div.filter-opts
+    [:div.filter-opts-items
+     [:select {:name "filter" :id "filter"}
+      [:option {:value "id"} "id"]
+      [:option {:value "execute-fn-sym"} "execute-fn-sym"]
+      [:option {:value "type"} "type"]]
+     [:input {:type "text" :name "filter" :id "filter" :placeholder "filter value"}]]
+    [:div.filter-opts-items
+     [:span.limit "Limit"]
+     [:input {:type "text" :name "limit" :id "limit" :placeholder "custom limit"}]]
+    [:div.filter-opts-items
+     [:button.btn.btn-action "Clear"]
+     [:button.btn "Apply"]]]
+   [:div.action-buttons
+    [:button.btn "Prioritise"]
+    [:button.btn.btn-danger "Delete"]]])
+
+(defn enqueued-jobs-table [jobs]
+  [:table.job-table
+   [:thead
+    [:tr
+     [:th.id "Id"]
+     [:th.execute-fn-sym "Execute-in-symbol"]
+     [:th.args "Args"]
+     [:th.enqueued-at "Enqueued-at"]
+     [:th.select [:input {:type "checkbox" :name "" :id ""}]]]]
+   [:tbody
+    (for [job jobs]
+      [:tr
+       [:td (:id job)]
+       [:td (:execute-fn-sym job)]
+       [:td (:args job)]
+       [:td (:enqueued-at job)]
+       [:td [:input {:type "checkbox" :name "" :id ""}]]])]])
+
+(defn enqueued-page-view [data]
+  [:div.redis-enqueued-main-content
+   [:h1 "Enqueued Jobs"]
+   [:div.content
+    (sidebar (:queues data))
+    [:div.right-side
+     (sticky-header)
+     [:div.pagination "1 2 .. >"]
+     (enqueued-jobs-table (:jobs data))
+     [:div.bottom
+      [:button.btn.btn-danger.btn-md "Purge"]]]]])
+
 (defn jobs-size [redis-conn]
   (let [queues (enqueued-jobs/list-all-queues redis-conn)
         enqueued (reduce (fn [total queue]
@@ -57,11 +114,24 @@
      :periodic  periodic
      :dead      dead}))
 
+(defn enqueued-page-data [redis-conn]
+  (let [queues (enqueued-jobs/list-all-queues redis-conn)
+        first-queue (first queues)
+        jobs (if first-queue (enqueued-jobs/get-by-range redis-conn first-queue 0 10))]
+    {:queues queues
+     :jobs   jobs}))
+
 (defn home-page [{{:keys [app-name
                           broker]} :client-opts}]
   (let [view (layout header stats-bar)
         data (jobs-size (:redis-conn broker))]
     (response/response (view "Home" (assoc data :app-name app-name)))))
+
+(defn enqueued-page [{{:keys [app-name broker]} :client-opts}]
+  (let [view (layout header enqueued-page-view)
+        data (enqueued-page-data (:redis-conn broker))
+        _ (println "Enqueued: " data)]
+    (response/response (view "Enqueued" (assoc data :app-name app-name)))))
 
 (defn- load-css [_]
   (-> "css/style.css"
@@ -83,14 +153,18 @@
   {:home-page             home-page
    :load-css              load-css
    :load-img              load-img
+   :enqueued-page         enqueued-page
    :redirect-to-home-page redirect-to-home-page
-   :not-found not-found})
+   :not-found             not-found})
 
 (defn handler [_ {:keys                  [uri]
                   {:keys [route-prefix]} :client-opts
                   :as                    req}]
   (let [routes [route-prefix [["" :redirect-to-home-page]
                               ["/" :home-page]
+                              ["/enqueued" {""                 :enqueued-page
+                                            ["/queue/" :queue] :enqueued-page
+                                            ["/" :id]          :enqueued-page}]
                               ["/css/style.css" :load-css]
                               ["/img/goose-logo.png" :load-img]
                               [true :not-found]]]
