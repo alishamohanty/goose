@@ -7,6 +7,9 @@
             [hiccup.page :refer [html5 include-css]]
             [ring.util.response :as response]))
 
+(def page-size 10)
+(def default-page "1")
+
 (defn- layout [& components]
   (fn [title {:keys [prefix-route] :as data}]
     (html5 [:head
@@ -54,21 +57,22 @@
      (for [queue queues]
        [:a {:href (prefix-route "/enqueued/queue/" queue)} [:li.queue-list-item queue]])]]])
 
-(defn sticky-header []
+(defn sticky-header [{:keys [prefix-route queue]}]
   [:div.header
-   [:div.filter-opts
-    [:div.filter-opts-items
-     [:select {:name "filter" :id "filter"}
-      [:option {:value "id"} "id"]
-      [:option {:value "execute-fn-sym"} "execute-fn-sym"]
-      [:option {:value "type"} "type"]]
-     [:input {:type "text" :name "filter" :id "filter" :placeholder "filter value"}]]
-    [:div.filter-opts-items
-     [:span.limit "Limit"]
-     [:input {:type "text" :name "limit" :id "limit" :placeholder "custom limit"}]]
-    [:div.filter-opts-items
-     [:button.btn.btn-action "Clear"]
-     [:button.btn "Apply"]]]
+   [:form {:action (prefix-route "/enqueued/queue/" queue) :method "post"}
+    [:div.filter-opts
+     [:div.filter-opts-items
+      [:select {:name "filter-type" :id "filter-type"}
+       [:option {:value "id"} "id"]
+       [:option {:value "execute-fn-sym"} "execute-fn-sym"]
+       [:option {:value "type"} "type"]]
+      [:input {:type "text" :name "filter-value" :id "filter-value" :placeholder "filter value"}]]
+     [:div.filter-opts-items
+      [:span.limit "Limit"]
+      [:input {:type "text" :name "limit" :id "limit" :placeholder "custom limit"}]]
+     [:div.filter-opts-items
+      [:button.btn.btn-action "Clear"]
+      [:input {:type "submit" :class "btn btn-action" :value "Apply"}]]]]
    [:div.action-buttons
     [:button.btn "Prioritise"]
     [:button.btn.btn-danger "Delete"]]])
@@ -81,7 +85,8 @@
      [:th.execute-fn-sym "Execute-in-symbol"]
      [:th.args "Args"]
      [:th.enqueued-at "Enqueued-at"]
-     [:th.select [:input {:type "checkbox" :name "" :id ""}]]]]
+     ;;[:th.select [:input {:type "checkbox" :name "" :id ""}]]
+     ]]
    [:tbody
     (for [job jobs]
       [:tr
@@ -89,7 +94,8 @@
        [:td (:execute-fn-sym job)]
        [:td (:args job)]
        [:td (:enqueued-at job)]
-       [:td [:input {:type "checkbox" :name "" :id ""}]]])]])
+       ;;[:td [:input {:type "checkbox" :name "" :id ""}]]
+       ])]])
 
 (defn enqueued-page-view [{:keys [prefix-route] :as data}]
   [:div.redis-enqueued-main-content
@@ -97,7 +103,7 @@
    [:div.content
     (sidebar data)
     [:div.right-side
-     (sticky-header)
+     ;;(sticky-header data)
      [:div.pagination
       [:a {:href (prefix-route "/enqueued/queue/" (:queue data) "?page=1")} "1"]
       [:a {:href (prefix-route "/enqueued/queue/" (:queue data) "?page=2")} "2"]
@@ -120,22 +126,20 @@
      :periodic  periodic
      :dead      dead}))
 
-(def page-size 10)
-
 (defn enqueued-page-data
-  [redis-conn queue page]
-  (let [page (Integer/parseInt (or page "1"))
-        start (* (- page 1) page-size)
-        end (- (* page page-size) 1)
+  ([redis-conn queue page]
+   (let [page (Integer/parseInt (or page default-page))
+         start (* (- page 1) page-size)
+         end (- (* page page-size) 1)
 
-        queues (enqueued-jobs/list-all-queues redis-conn)
-        queue (or queue (first queues))
+         queues (enqueued-jobs/list-all-queues redis-conn)
+         queue (or queue (first queues))
 
-        jobs (enqueued-jobs/get-by-range redis-conn queue start end)]
-    {:queues queues
-     :page page
-     :queue  queue
-     :jobs   jobs}))
+         jobs (enqueued-jobs/get-by-range redis-conn queue start end)]
+     {:queues queues
+      :page   page
+      :queue  queue
+      :jobs   jobs})))
 
 (defn home-page [{:keys            [prefix-route]
                   {:keys [app-name
@@ -170,27 +174,18 @@
 (defn- not-found [_]
   (response/not-found "<div> Not found </div>"))
 
-(def route-handlers
-  {:home-page             home-page
-   :load-css              load-css
-   :load-img              load-img
-   :enqueued-page         enqueued-page
-   :redirect-to-home-page redirect-to-home-page
-   :not-found             not-found})
-
 (defn routes [route-prefix]
-  [route-prefix [["" :redirect-to-home-page]
-                 ["/" :home-page]
-                 ["/enqueued" {""                 :enqueued-page
-                               ["/queue/" :queue] :enqueued-page}]
-                 ["/css/style.css" :load-css]
-                 ["/img/goose-logo.png" :load-img]
-                 [true :not-found]]])
+  [route-prefix [["" redirect-to-home-page]
+                 ["/" home-page]
+                 ["/enqueued" {""                 enqueued-page
+                               ["/queue/" :queue] enqueued-page}]
+                 ["/css/style.css" load-css]
+                 ["/img/goose-logo.png" load-img]
+                 [true not-found]]])
 
 (defn handler [_ {:keys                  [uri]
                   {:keys [route-prefix]} :client-opts
                   :as                    req}]
   (let [{:keys [handler route-params]} (bidi/match-route (routes route-prefix) uri)
-        handler-fn (get route-handlers handler)
         req (assoc req :route-params route-params)]
-    (handler-fn req)))
+    (handler req)))
