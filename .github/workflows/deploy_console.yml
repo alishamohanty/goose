@@ -1,0 +1,69 @@
+name: staging-console
+
+on:
+  push:
+    branches:
+      - staging-console
+jobs:
+
+  lint:
+    runs-on: ubuntu-20.04
+    container: cljkondo/clj-kondo:2022.10.05-alpine
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint src
+        run: clj-kondo --lint src/
+      - name: Lint test
+        run: clj-kondo --lint test/
+      - name: Lint perf
+        run: clj-kondo --lint perf/
+
+  test:
+    runs-on: ubuntu-20.04
+    container: clojure:openjdk-19-tools-deps-1.11.1.1113-bullseye
+    services:
+      redis:
+        image: redis:7.0
+        # Health checks will wait until redis has started.
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      rabbitmq:
+        image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
+        env:
+          RABBITMQ_DEFAULT_USER: goose
+          RABBITMQ_DEFAULT_PASS: top-gun
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: clj -X:test
+        env:
+          GOOSE_TEST_REDIS_HOST: redis
+          GOOSE_TEST_REDIS_PORT: 6379
+          GOOSE_TEST_RABBITMQ_HOST: rabbitmq
+          GOOSE_TEST_RABBITMQ_PORT: 5672
+          GOOSE_TEST_RABBITMQ_USERNAME: goose
+          GOOSE_TEST_RABBITMQ_PASSWORD: top-gun
+
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to staging
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvc -i"
+          SOURCE: "."
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SCRIPT_BEFORE: |
+          SCRIPT_AFTER: |
+            ls
+            cd ~/../../home/root
+            docker-compose down
+            docker-compose up --build -d
