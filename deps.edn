@@ -29,6 +29,8 @@
                         :exec-args   {:port         3000
                                       :console-opts {:route-prefix ""
                                                      :app-name     "Alisha's app"}}}
+           :build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.3" :git/sha "15ead66"}}
+                   :ns-default build}
            :redis-perf {:extra-paths ["perf"]
                         :exec-fn     goose.redis.load/benchmark
                         :extra-deps  {criterium/criterium                 {:mvn/version "0.4.6"}

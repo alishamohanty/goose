@@ -8,4 +8,5 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Start the application
-CMD ["clj", "-X:console"]
+CMD ["clj", "-T:build" "uber"]
+CMD ["java" "-jar" "target/goose-standalone.jar"]
