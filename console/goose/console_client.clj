@@ -62,6 +62,7 @@
 (defonce server (atom nil))
 
 (defn routes [console-opts]
+  (println "Opts: " console-opts)
   (defroutes goose-routes
              (context (:route-prefix console-opts) []
                       (partial console/app-handler console-opts))
