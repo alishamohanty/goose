@@ -60,4 +60,3 @@
 (defn restart []
   (stop-server)
   (refresh :after 'goose.goose-client/start-server))
-

@@ -7,5 +7,4 @@ WORKDIR /usr/src/app
 # Copy the application code into the container
 COPY . .
 
-# Start the application
 CMD ["clj", "-X:console"]
