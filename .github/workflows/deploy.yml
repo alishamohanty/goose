@@ -8,7 +8,6 @@ jobs:
 
   build:
     runs-on: ubuntu-20.04
-    container: clojure:openjdk-19-tools-deps-1.11.1.1113-bullseye
     services:
       redis:
         image: redis:7.0
@@ -20,25 +19,24 @@ jobs:
       rabbitmq:
         image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
         env:
-          RABBITMQ_DEFAULT_USER: goose
-          RABBITMQ_DEFAULT_PASS: top-gun
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build uberjar
-        run: |
-            env
-            clj -X:console
-            env
-        env:
-          GOOSE_REDIS_HOST: redis
-          GOOSE_REDIS_PORT: 6379
-          GOOSE_RABBITMQ_HOST: rabbitmq
-          GOOSE_RABBITMQ_PORT: 5672
-          GOOSE_RABBITMQ_USERNAME: goose
-          GOOSE_RABBITMQ_PASSWORD: top-gun
-          GOOSE_BROKER: rmq
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: actions/upload-artifact@v4
+      - name: Setup up java
+        uses: actions/setup-java@v4
         with:
-          name: goose-standalone.jar
-          path: target/
+          distribution: 'adopt'
+          java-version: '21'
+
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 1.11.1.1409
+
+      - name: Execute clojure code
+        run: |
+          env
+          clojure -X:console
