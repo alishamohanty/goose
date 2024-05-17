@@ -53,6 +53,11 @@ jobs:
     services:
       redis:
         image: redis:7.0
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       rabbitmq:
         image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
         env:
@@ -61,7 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build uberjar
-        run: clj -T:build uber
+        run: clj -X:console
         env:
           GOOSE_REDIS_HOST: redis
           GOOSE_REDIS_PORT: 6379
