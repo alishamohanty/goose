@@ -61,8 +61,8 @@ jobs:
       rabbitmq:
         image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
         env:
-          RABBITMQ_DEFAULT_USER: guest
-          RABBITMQ_DEFAULT_PASS: guest
+          RABBITMQ_DEFAULT_USER: goose
+          RABBITMQ_DEFAULT_PASS: top-gun
     steps:
       - uses: actions/checkout@v3
       - name: Build uberjar
@@ -72,8 +72,8 @@ jobs:
           GOOSE_REDIS_PORT: 6379
           GOOSE_RABBITMQ_HOST: rabbitmq
           GOOSE_RABBITMQ_PORT: 5672
-          GOOSE_RABBITMQ_USERNAME: guest
-          GOOSE_RABBITMQ_PASSWORD: guest
+          GOOSE_RABBITMQ_USERNAME: goose
+          GOOSE_RABBITMQ_PASSWORD: top-gun
           GOOSE_BROKER: rmq
 
       - uses: actions/upload-artifact@v4
