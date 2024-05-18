@@ -27,7 +27,7 @@
                       (merge redis/default-opts {:url redis-url})))
 
 (def rmq-producer (rmq/new-producer (merge rmq/default-opts
-                                           {:settings {:url rmq-url}})))
+                                           {:settings {:uri rmq-url}})))
 
 (def broker (or (System/getenv "GOOSE_BROKER") "redis"))
 
