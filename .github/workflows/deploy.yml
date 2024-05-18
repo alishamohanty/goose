@@ -53,12 +53,16 @@ jobs:
           clojure -T:build uber
           ls
 
-      - name: copy jar to vm
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy to staging
+        uses: easingthemes/ssh-deploy@main
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          source: target/goose-standalone.jar
-          target: .
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvc -i"
+          SOURCE: "root/"
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SCRIPT_BEFORE: |
+            ls
+          SCRIPT_AFTER: |
+            ls
+            whoami
