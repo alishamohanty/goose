@@ -14,7 +14,7 @@ env:
 jobs:
 
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     services:
       redis:
         image: redis:7.0
@@ -54,13 +54,11 @@ jobs:
           ls
 
       - name: copy jar to vm
-        uses: nicklasfrahm/scp-action@main
+        uses: appleboy/scp-action@v0.1.7
         with:
-          direction: upload
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           port: 22
-          source: target/goose-standalone.jar
+          source: ./target/goose-standalone.jar
           target: .
