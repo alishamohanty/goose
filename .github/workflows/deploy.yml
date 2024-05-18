@@ -53,18 +53,14 @@ jobs:
           clojure -T:build uber
           ls
 
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: goose-standalone.jar
-#          path: target/
-
       - name: copy jar to vm
-        uses: appleboy/scp-action@v0.1.7
+        uses: nicklasfrahm/scp-action@main
         with:
+          direction: upload
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           port: 22
           source: target/goose-standalone.jar
           target: .
-
