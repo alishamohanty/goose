@@ -75,10 +75,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Start Goose console
-        uses: garygrossgarten/github-action-ssh@release
+        uses: fifsky/ssh-action@master
         with:
           command: java -jar goose-standalone.jar
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          privatekey: ${{ secrets.SSH_PRIVATE_KEY }}
+          user: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
 
