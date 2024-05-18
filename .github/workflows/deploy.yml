@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - deploy
+env:
+  GOOSE_REDIS_HOST: localhost
+  GOOSE_REDIS_PORT: 6379
+  GOOSE_RABBITMQ_HOST: localhost
+  GOOSE_RABBITMQ_PORT: 5672
+  GOOSE_RABBITMQ_USERNAME: guest
+  GOOSE_RABBITMQ_PASSWORD: guest
 jobs:
 
   build:
@@ -16,11 +23,16 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 6379:6379
       rabbitmq:
         image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
         env:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -54,17 +66,11 @@ jobs:
         with:
           cli: 1.11.1.1409
 
-      - name: Redis
-        run: redis-cli -h redis -p 6367 ping
-
       - name: Rabbitmq
         run: rabbitmqadmin -q -u guest -p guest -H rabbitmq -P 15672 list exchanges
 
       - name: Env
         run: env
-
-      - name: Redis localhost
-        run: redis-cli -h localhost -p 6379 ping
 
       - name: Execute clojure code
         run: |
