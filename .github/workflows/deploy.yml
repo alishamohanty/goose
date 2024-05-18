@@ -37,24 +37,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install RabbitMQ Management CLI
-        run: |
-          curl -o rabbitmqadmin https://raw.githubusercontent.com/rabbitmq/rabbitmq-management/v3.9.13/bin/rabbitmqadmin
-          chmod +x rabbitmqadmin
-          sudo mv rabbitmqadmin /usr/local/bin/
-
-      - name: Wait for RabbitMQ to be ready
-        run: |
-          # Wait for RabbitMQ Management API to be ready
-          for i in {1..30}; do
-            if curl -u guest:guest -f -s http://rabbitmq:15672/api/health/checks/node | grep '"status":"ok"'; then
-              echo "RabbitMQ is healthy"
-              break
-            fi
-            echo "Waiting for RabbitMQ to be healthy..."
-            sleep 5
-          done
-
       - name: Setup up java
         uses: actions/setup-java@v4
         with:
@@ -65,9 +47,6 @@ jobs:
         uses: DeLaGuardo/setup-clojure@12.5
         with:
           cli: 1.11.1.1409
-
-      - name: Rabbitmq
-        run: rabbitmqadmin -q -u guest -p guest -H rabbitmq -P 15672 list exchanges
 
       - name: Env
         run: env
