@@ -54,16 +54,11 @@ jobs:
           ls
 
       - name: copy jar to vm
-        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          user: ${{ secrets.SSH_USERNAME }}
+          username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          first_ssh: |
-            ls
-            whoami
-          scp: |
-            'target/goose-standalone.jar' => .
-          last_ssh: |
-            ls
+          source: target/goose-standalone.jar
+          target: .
