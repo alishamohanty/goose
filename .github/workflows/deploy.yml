@@ -5,9 +5,9 @@ on:
     branches:
       - deploy
 env:
-  GOOSE_REDIS_HOST: localhost
+  GOOSE_REDIS_HOST: redis
   GOOSE_REDIS_PORT: 6379
-  GOOSE_RABBITMQ_HOST: localhost
+  GOOSE_RABBITMQ_HOST: rabbitmq
   GOOSE_RABBITMQ_PORT: 5672
   GOOSE_RABBITMQ_USERNAME: guest
   GOOSE_RABBITMQ_PASSWORD: guest
@@ -23,16 +23,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 6379:6379
       rabbitmq:
         image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
         env:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
-        ports:
-          - 5672:5672
-          - 15672:15672
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
