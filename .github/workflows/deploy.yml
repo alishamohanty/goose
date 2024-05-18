@@ -64,7 +64,8 @@ jobs:
           clojure -T:build uber
           ls
 
-      - uses: nogsantos/scp-deploy@master
+      - name: Move goose jar to VM
+        uses: nogsantos/scp-deploy@master
         with:
           src: ./target/goose-standalone.jar
           host: ${{ secrets.SSH_HOST }}
@@ -72,3 +73,12 @@ jobs:
           port: 22
           user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Start Goose console
+        uses: garygrossgarten/github-action-ssh@release
+        with:
+          command: java -jar goose-standalone.jar
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          privatekey: ${{ secrets.SSH_PRIVATE_KEY }}
+
