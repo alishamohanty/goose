@@ -31,7 +31,7 @@
 
 (def broker (or (System/getenv "GOOSE_BROKER") "redis"))
 
-(defn add-enqueued-jobs []
+(defn redis-enqueued-jobs []
   (let [client-opts (assoc c/default-opts
                       :broker redis-producer)]
     (c/perform-async client-opts `my-fn "foo" :nar)
@@ -49,33 +49,39 @@
                        :broker redis-producer) `prn "foo" :bar)))
 
 (defn brokers [broker]
-  (when (= broker "redis")
-    (add-enqueued-jobs))
   (get {:redis redis-producer
-        :rmq   rmq-producer} (keyword broker)))
+        :rabbitmq   rmq-producer} (keyword broker)))
 
-(def default-console-opts
+(defn console-opts [broker app-name]
   {:broker       (brokers broker)
-   :app-name     "Goose's client"
+   :app-name     app-name
    :route-prefix ""})
 
 (defonce server (atom nil))
 
 (defn routes [console-opts]
-  (println "Opts: " console-opts)
+
   (defroutes goose-routes
              (context (:route-prefix console-opts) []
                       (partial console/app-handler console-opts))
              (route/not-found "<h1>Page not found </h1>")))
 
-(defn start-server [& {:keys [port console-opts]}]
-  (println "Starting server!!")
-  (reset! server (jetty/run-jetty (routes (merge default-console-opts console-opts))
-                                  {:port  (or port 3000)
-                                   :join? false})))
+(defn start-server []
+  (let [broker (or (System/getenv "GOOSE_BROKER") "redis")
+        app-name (or (System/getenv "GOOSE_APPNAME") "Goose's client")
+        console-opts (console-opts broker app-name)
+        port (or (System/getenv "GOOSE_PORT") 3000)]
+    (println "Starting server!!")
+    (reset! server (jetty/run-jetty (routes console-opts)
+                                    {:port port
+                                     :join? false}))))
 
-(defn -main [& console-opts]
-  (start-server console-opts))
+(defn -main [& args]
+  (let [func (first args)]
+    (case func
+      "redis-enqueued-jobs" (doall (redis-enqueued-jobs)
+                                   (System/exit 1))
+      (start-server))))
 
 (defn stop-server []
   (when-let [s @server]

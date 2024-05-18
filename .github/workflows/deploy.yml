@@ -11,6 +11,8 @@ env:
   GOOSE_RABBITMQ_PORT: 5672
   GOOSE_RABBITMQ_USERNAME: guest
   GOOSE_RABBITMQ_PASSWORD: guest
+  GOOSE_APPNAME: Goose Client
+  GOOSE_BROKER: ${{ secrets.GOOSE_BROKER }}
 jobs:
 
   build:
@@ -48,6 +50,15 @@ jobs:
         with:
           cli: 1.11.1.1409
 
+      - name: Cache goose dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: goose-deps
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('deps.edn') }}
+          restore-keys: ${{ runner.os }}-${{ env.cache-name }}
+
       - name: Execute clojure code
         run: |
           clojure -T:build uber
@@ -57,7 +68,7 @@ jobs:
         with:
           src: ./target/goose-standalone.jar
           host: ${{ secrets.SSH_HOST }}
-          remote: /home/deploy
+          remote: .
           port: 22
           user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
