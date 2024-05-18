@@ -77,8 +77,9 @@ jobs:
       - name: Start Goose console
         uses: fifsky/ssh-action@master
         with:
-          command: java -jar goose-standalone.jar
           host: ${{ secrets.SSH_HOST }}
           user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+          command: |
+            kill $(pgrep -f goose-standalone.jar)
+            nohup java -jar goose-standalone.jar & exit
