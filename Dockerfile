@@ -1,17 +1,11 @@
-# Use the official Clojure image with OpenJDK and tools.deps
-FROM clojure:openjdk-19-tools-deps-1.11.1.1113-bullseye
+# Use the openjdk:19-jdk-alpine base image
+FROM openjdk:19-jdk-alpine
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+# Set the working directory inside the container
+WORKDIR /app
 
-# Expose port 3000
-EXPOSE 3000
+# Copy the JAR file to the container
+COPY goose-standalone.jar .
 
-# Copy the application code and entrypoint script into the container
-COPY . .
-
-# Ensure the entrypoint script is executable
-RUN chmod +x /usr/src/app/entrypoint.sh
-
-# Start the application using the entrypoint script
-CMD ["clj"]
+# Set the entry point to run the JAR file
+ENTRYPOINT ["java", "-jar", "goose-standalone.jar"]
