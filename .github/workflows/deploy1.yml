@@ -65,7 +65,7 @@ jobs:
       - name: Move goose jar to VM
         uses: nogsantos/scp-deploy@master
         with:
-          src: ./*
+          src: ./target/goose-standalone.jar
           host: ${{ secrets.SSH_HOST }}
           remote: .
           port: 22
