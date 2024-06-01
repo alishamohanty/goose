@@ -1,12 +1,12 @@
 services:
   redis:
     image: redis:7.0
-    container_name:  console_redis
+    container_name:  goose_redis
     ports:
       - 6379:6379
   rabbitmq:
     image: heidiks/rabbitmq-delayed-message-exchange:3.9.13-management
-    container_name:  console_rmq
+    container_name:  goose_rmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -15,7 +15,7 @@ services:
       - 15672:15672
   goose:
     build: .
-    container_name: new-console
+    container_name: goose_console
     ports:
       - 3000:3000
     environment:

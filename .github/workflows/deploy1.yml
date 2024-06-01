@@ -82,5 +82,4 @@ jobs:
           user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command: |
-            docker-compose down
             docker-compose up --build -d
