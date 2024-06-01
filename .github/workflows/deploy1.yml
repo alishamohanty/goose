@@ -11,7 +11,7 @@ env:
   GOOSE_RABBITMQ_PORT: 5672
   GOOSE_RABBITMQ_USERNAME: guest
   GOOSE_RABBITMQ_PASSWORD: guest
-  GOOSE_APPNAME: Goose Client
+  GOOSE_APPNAME: Nilenso's app
   GOOSE_BROKER: ${{ secrets.GOOSE_BROKER }}
 jobs:
 

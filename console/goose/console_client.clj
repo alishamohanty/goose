@@ -46,7 +46,7 @@
 
 (defn start-server [& _]
   (let [broker (or (System/getenv "GOOSE_BROKER") "redis")
-        app-name (or (System/getenv "GOOSE_APPNAME") "Goose's client")
+        app-name (or (System/getenv "GOOSE_APPNAME") "Goose client")
         console-opts (console-opts broker app-name)
         port (or (System/getenv "GOOSE_PORT") 3000)]
     (println "Starting server!!")
