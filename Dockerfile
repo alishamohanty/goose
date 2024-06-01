@@ -14,4 +14,4 @@ COPY . .
 RUN chmod +x /usr/src/app/entrypoint.sh
 
 # Start the application using the entrypoint script
-CMD ["/usr/src/app/entrypoint.sh"]
+CMD ["clj"]

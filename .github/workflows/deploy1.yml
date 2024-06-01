@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: '21'
+          java-version: '19'
 
       - name: Install Clojure
         uses: DeLaGuardo/setup-clojure@12.5
@@ -65,11 +65,7 @@ jobs:
       - name: Move goose jar to VM
         uses: nogsantos/scp-deploy@master
         with:
-          src: |
-            ./target/goose-standalone.jar
-            Dockerfile
-            docker-compose.yml
-            entrypoint.sh
+          src: ./*
           host: ${{ secrets.SSH_HOST }}
           remote: .
           port: 22
