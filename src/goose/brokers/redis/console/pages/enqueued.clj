@@ -1,9 +1,10 @@
 (ns ^:no-doc goose.brokers.redis.console.pages.enqueued
-  (:require [clojure.string :as string]
-            [clojure.math :as math]
+  (:require [clojure.math :as math]
+            [clojure.string :as string]
             [goose.brokers.redis.api.enqueued-jobs :as enqueued-jobs]
             [goose.brokers.redis.console.data :as data]
             [goose.brokers.redis.console.pages.components :as c]
+            [goose.brokers.redis.console.pages.spike :as spike]
             [goose.brokers.redis.console.specs :as specs]
             [goose.console :as console]
             [goose.defaults :as d]
@@ -200,10 +201,20 @@
                                                      :prefix-route prefix-route))))
       (response/redirect (prefix-route "/enqueued/queue/" queue)))))
 
+#_(defn get-jobs [{:keys                     [prefix-route uri]
+                   {:keys [app-name broker]} :console-opts
+                   params                    :params}]
+    (let [view (console/layout c/header jobs-page-view)
+          validated-params (validate-get-jobs params)
+          data (data/enqueued-page-data (:redis-conn broker) validated-params)]
+      (response/response (view "Enqueued" (assoc data :uri uri
+                                                      :params params
+                                                      :app-name app-name
+                                                      :prefix-route prefix-route)))))
 (defn get-jobs [{:keys                     [prefix-route uri]
                  {:keys [app-name broker]} :console-opts
                  params                    :params}]
-  (let [view (console/layout c/header jobs-page-view)
+  (let [view (spike/view :enqueued :jobs)
         validated-params (validate-get-jobs params)
         data (data/enqueued-page-data (:redis-conn broker) validated-params)]
     (response/response (view "Enqueued" (assoc data :uri uri
