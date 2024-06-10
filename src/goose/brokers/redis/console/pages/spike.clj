@@ -4,9 +4,6 @@
             [goose.console :as console]
             [goose.defaults :as d]
             [hiccup.util :as hiccup-util]))
-;;
-;;(def page {:jobs jobs-page
-;;           :job  job-page})
 
 (defn jobs-page [{:keys [heading class sidebar filter pagination table action-btn purge]} {:keys [total-jobs] :as data}]
   [:div {:class class}

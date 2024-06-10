@@ -58,7 +58,7 @@
     [:input {:type "button" :value "Cancel" :class "btn btn-md btn-cancel cancel"}]
     [:input {:type "submit" :value "Confirm" :class "btn btn-danger btn-md"}]]])
 
-(defn- sticky-header [{:keys                                    [prefix-route queue]
+(defn- filter-header [{:keys                                    [prefix-route queue]
                        {:keys [filter-type filter-value limit]} :params}]
   [:div.header
    [:form.filter-opts {:action (prefix-route "/enqueued/queue/" queue)
@@ -89,12 +89,16 @@
       [:a. {:href (prefix-route "/enqueued/queue/" queue) :class "cursor-default"} "Clear"]]
      [:button.btn {:type "submit"} "Apply"]]]])
 
-(defn jobs-table [{:keys [prefix-route queue jobs]}]
+(defn jobs-table [{:keys [prefix-route queue jobs replay?]}]
   [:form {:action (prefix-route "/enqueued/queue/" queue "/jobs")
           :method "post"}
    (c/delete-confirm-dialog
      (str "Are you sure you want to delete selected jobs in " queue " queue?"))
-   (c/action-btns)
+   [:div.actions
+    [:input.btn {:type "submit" :value "Prioritise" :disabled disabled}]
+    [:input.btn {:type "submit" :value "Replay" :disabled disabled}]
+    [:input.btn.btn-danger
+     {:type "button" :value "Delete" :class "delete-dialog-show" :disabled disabled}]]
    [:table.jobs-table
     [:thead
      [:tr
@@ -107,7 +111,8 @@
      (for [{:keys [id execute-fn-sym args enqueued-at] :as j} jobs]
        [:tr
         [:td [:a {:href  (prefix-route "/enqueued/queue/" queue "/job/" id)
-                  :class "underline"}
+                  :class (when (= theme :dark) "underline"
+                                               "no-underline")}
               [:div.id id]]]
         [:td [:div.execute-fn-sym (str execute-fn-sym)]]
         [:td [:div.args (string/join ", " (mapv c/format-arg args))]]
@@ -134,13 +139,13 @@
               :value (utils/encode-to-str job)}]
      (when job (c/job-table job))]]])
 
-(defn- jobs-page-view [{:keys [total-jobs] :as data}]
+(defn- enqueued-jobs-page-view [{:keys [total-jobs] :as data}]
   [:div.redis-enqueued
    [:h1 "Enqueued Jobs"]
    [:div.content
     (sidebar data)
     [:div.right-side
-     (sticky-header data)
+     (sticky-header data ["id" "execute-fn-sym" "type"])
      [:div.pagination
       (when total-jobs
         (pagination data))]
@@ -149,6 +154,39 @@
        [:div.bottom
         (purge-confirmation-dialog data)
         [:button {:class "btn btn-danger btn-lg purge-dialog-show"} "Purge"]])]]])
+
+(defn- dead-jobs-page-view [{:keys [total-jobs] :as data}]
+  [:div.redis-enqueued
+   [:h1 "Dead Jobs"]
+   [:div.content
+    [:div.right-side
+     (sticky-header data ["id" "execute-fn-sym" "queue"])
+     [:div.pagination
+      (when total-jobs
+        (pagination data))]
+     (jobs-table data)
+     (when (and total-jobs (> total-jobs 0))
+       [:div.bottom
+        (purge-confirmation-dialog data)
+        [:button {:class "btn btn-danger btn-lg purge-dialog-show"} "Purge"]])]]])
+
+(defn- page-view [title]
+  [:div.redis-enqueued
+   [:h1 title]
+   [:div.content
+    (when (= title "Enqueued Jobs")
+      (sidebar data))
+    [:div.right-side
+     (sticky-header data ["id" "execute-fn-sym" "queue"])
+     [:div.pagination
+      (when total-jobs
+        (pagination data))]
+     (jobs-table data)
+     (when (and total-jobs (> total-jobs 0))
+       [:div.bottom
+        (purge-confirmation-dialog data)
+        [:button {:class "btn btn-danger btn-lg purge-dialog-show"} "Purge"]])]]])
+
 
 (defn validate-get-jobs [{:keys [page filter-type limit filter-value queue]}]
   (let [page (specs/validate-or-default ::specs/page
